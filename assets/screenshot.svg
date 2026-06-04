@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="420" viewBox="0 0 800 420" font-family="SFMono-Regular,Consolas,Menlo,monospace">
+  <rect width="800" height="420" rx="10" fill="#1e1e2e"/>
+  <text x="24" y="36" font-size="17" font-weight="700" fill="#cdd6f4" font-family="system-ui,sans-serif">curl-to-client</text>
+  <text x="200" y="36" font-size="13" fill="#6c7086" font-family="system-ui,sans-serif">paste a cURL → get a typed client</text>
+  <rect x="20" y="52" width="760" height="70" rx="8" fill="#11111b"/>
+  <text font-size="12.5" xml:space="preserve">
+    <tspan x="34" y="78" fill="#a6e3a1">$ </tspan><tspan fill="#cdd6f4">curl -X POST https://api.x.com/users \</tspan>
+    <tspan x="48" y="96" fill="#cdd6f4">-H </tspan><tspan fill="#a6e3a1">'Authorization: Bearer t'</tspan><tspan fill="#cdd6f4"> -d </tspan><tspan fill="#a6e3a1">'{"name":"Ada"}'</tspan>
+    <tspan x="34" y="114" fill="#6c7086"># + sample response { id: 1, name: "Ada" }</tspan>
+  </text>
+  <text x="390" y="148" font-size="16" fill="#6c7086" text-anchor="middle">↓ generateClient()</text>
+  <rect x="20" y="160" width="760" height="240" rx="8" fill="#11111b"/>
+  <text font-size="12.5" xml:space="preserve">
+    <tspan x="34" y="186" fill="#cba6f7">export interface</tspan><tspan fill="#89b4fa"> Response</tspan><tspan fill="#cdd6f4"> {</tspan>
+    <tspan x="34" y="204" fill="#cdd6f4">  id: </tspan><tspan fill="#89dceb">number</tspan><tspan fill="#cdd6f4">;  name: </tspan><tspan fill="#89dceb">string</tspan><tspan fill="#cdd6f4">;</tspan>
+    <tspan x="34" y="222" fill="#cdd6f4">}</tspan>
+    <tspan x="34" y="248" fill="#cba6f7">export async function</tspan><tspan fill="#89b4fa"> createUser</tspan><tspan fill="#cdd6f4">(): </tspan><tspan fill="#89dceb">Promise</tspan><tspan fill="#cdd6f4">&lt;Response&gt; {</tspan>
+    <tspan x="34" y="266" fill="#cdd6f4">  </tspan><tspan fill="#cba6f7">const</tspan><tspan fill="#cdd6f4"> url = </tspan><tspan fill="#cba6f7">new</tspan><tspan fill="#cdd6f4"> URL(</tspan><tspan fill="#a6e3a1">"https://api.x.com/users"</tspan><tspan fill="#cdd6f4">);</tspan>
+    <tspan x="34" y="284" fill="#cdd6f4">  </tspan><tspan fill="#cba6f7">const</tspan><tspan fill="#cdd6f4"> res = </tspan><tspan fill="#cba6f7">await</tspan><tspan fill="#cdd6f4"> fetch(url.toString(), {</tspan>
+    <tspan x="34" y="302" fill="#cdd6f4">    method: </tspan><tspan fill="#a6e3a1">"POST"</tspan><tspan fill="#cdd6f4">,</tspan>
+    <tspan x="34" y="320" fill="#cdd6f4">    headers: { </tspan><tspan fill="#a6e3a1">"Authorization"</tspan><tspan fill="#cdd6f4">: </tspan><tspan fill="#a6e3a1">"Bearer t"</tspan><tspan fill="#cdd6f4"> },</tspan>
+    <tspan x="34" y="338" fill="#cdd6f4">    body: </tspan><tspan fill="#a6e3a1">'{"name":"Ada"}'</tspan><tspan fill="#cdd6f4">,</tspan>
+    <tspan x="34" y="356" fill="#cdd6f4">  });</tspan>
+    <tspan x="34" y="374" fill="#cdd6f4">  </tspan><tspan fill="#cba6f7">if</tspan><tspan fill="#cdd6f4"> (!res.ok) </tspan><tspan fill="#cba6f7">throw new</tspan><tspan fill="#cdd6f4"> Error(...);  </tspan><tspan fill="#cba6f7">return</tspan><tspan fill="#cdd6f4"> res.json();</tspan>
+    <tspan x="34" y="392" fill="#cdd6f4">}   </tspan><tspan fill="#6c7086"># ✓ 10 tests · query/headers/-u basic auth · nested type inference</tspan>
+  </text>
+</svg>
