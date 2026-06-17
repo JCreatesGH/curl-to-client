@@ -30,4 +30,29 @@ describe("parseCurl", () => {
     expect(p.query).toEqual({ q: "hi", page: "2" });
     expect(p.headers["Authorization"]).toMatch(/^Basic /);
   });
+
+  it("handles attached short flags (-XPOST, -d'...')", () => {
+    const p = parseCurl(`curl -XPOST https://x.com -d'{"a":1}'`);
+    expect(p.method).toBe("POST");
+    expect(p.body).toBe('{"a":1}');
+  });
+
+  it("concatenates multiple -d flags with &", () => {
+    const p = parseCurl("curl https://x.com -d a=1 -d b=2");
+    expect(p.body).toBe("a=1&b=2");
+    expect(p.method).toBe("POST");
+  });
+
+  it("url-encodes --data-urlencode values", () => {
+    const p = parseCurl("curl https://x.com --data-urlencode 'q=a b&c'");
+    expect(p.body).toBe("q=a%20b%26c");
+  });
+
+  it("--json sets body and JSON content-type/accept headers", () => {
+    const p = parseCurl(`curl https://x.com --json '{"a":1}'`);
+    expect(p.body).toBe('{"a":1}');
+    expect(p.method).toBe("POST");
+    expect(p.headers["Content-Type"]).toBe("application/json");
+    expect(p.headers["Accept"]).toBe("application/json");
+  });
 });

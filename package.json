@@ -5,8 +5,10 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "scripts": { "test": "vitest run", "build": "tsc -p tsconfig.json" },
-  "keywords": ["curl", "codegen", "typescript", "fetch", "api-client", "types"],
+  "sideEffects": false,
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": { "test": "vitest run", "build": "tsc -p tsconfig.json", "prepare": "npm run build" },
+  "keywords": ["curl", "codegen", "typescript", "fetch", "api-client", "types", "python", "requests"],
   "author": "Joshua John <josh202@gmail.com>",
   "license": "MIT",
   "devDependencies": { "vitest": "^4.0.0", "typescript": "^5.4.0", "@types/node": "^20.0.0" }
