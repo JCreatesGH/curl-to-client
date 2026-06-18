@@ -1,14 +1,15 @@
 {
   "name": "curl-to-client",
-  "version": "0.1.0",
-  "description": "Turn a cURL command into a typed TypeScript fetch client, with response types inferred from a sample.",
+  "version": "0.2.0",
+  "description": "Turn a cURL command into a typed TypeScript fetch client, a Python requests client, or Go net/http — with response types inferred from a sample.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": { "curl-to-client": "dist/cli.js" },
   "sideEffects": false,
   "files": ["dist", "README.md", "LICENSE"],
   "scripts": { "test": "vitest run", "build": "tsc -p tsconfig.json", "prepare": "npm run build" },
-  "keywords": ["curl", "codegen", "typescript", "fetch", "api-client", "types", "python", "requests"],
+  "keywords": ["curl", "codegen", "typescript", "fetch", "api-client", "types", "python", "requests", "go", "cli"],
   "author": "Joshua John <josh202@gmail.com>",
   "license": "MIT",
   "devDependencies": { "vitest": "^4.0.0", "typescript": "^5.4.0", "@types/node": "^20.0.0" }

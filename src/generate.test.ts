@@ -38,4 +38,26 @@ describe("generateClient", () => {
     const code = generateClient("curl -X PURGE https://x.com/cache", { target: "python" });
     expect(code).toContain('requests.request("PURGE", url)');
   });
+
+  it("generates a Go net/http client", () => {
+    const code = generateClient(
+      `curl -X POST 'https://api.x.com/users?team=eng' -H 'Authorization: Bearer t' -d '{"name":"Ada"}'`,
+      { functionName: "createUser", target: "go" }
+    );
+    expect(code).toContain("package main");
+    expect(code).toContain('"net/url"');        // query -> net/url imported
+    expect(code).toContain('"strings"');         // body -> strings imported
+    expect(code).toContain("func CreateUser() ([]byte, error) {");  // exported name
+    expect(code).toContain('http.NewRequest("POST", u.String(), strings.NewReader("{\\"name\\":\\"Ada\\"}"))');
+    expect(code).toContain('q.Set("team", "eng")');
+    expect(code).toContain('req.Header.Set("Authorization", "Bearer t")');
+    expect(code).toContain("io.ReadAll(resp.Body)");
+  });
+
+  it("omits net/url and strings imports for a bare GET", () => {
+    const code = generateClient("curl https://x.com/health", { target: "go" });
+    expect(code).not.toContain('"net/url"');
+    expect(code).not.toContain('"strings"');
+    expect(code).toContain('http.NewRequest("GET", "https://x.com/health", nil)');
+  });
 });

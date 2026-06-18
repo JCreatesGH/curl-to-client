@@ -1,16 +1,19 @@
 import { parseCurl, ParsedCurl } from "./parse-curl.js";
 import { inferTypes } from "./infer-types.js";
 
+export type Target = "fetch" | "python" | "go";
+
 export interface GenerateOptions {
   functionName?: string;
   sampleResponse?: unknown;     // a sample JSON body to infer the return type
-  target?: "fetch" | "python";  // output language (default "fetch")
+  target?: Target;              // output language (default "fetch")
 }
 
 export function generateClient(curlCommand: string, opts: GenerateOptions = {}): string {
   const p = parseCurl(curlCommand);
   const fn = opts.functionName ?? "request";
   if (opts.target === "python") return generatePython(p, fn);
+  if (opts.target === "go") return generateGo(p, fn);
   const returnType = opts.sampleResponse !== undefined ? "Response" : "unknown";
   const typeDefs = opts.sampleResponse !== undefined
     ? inferTypes(opts.sampleResponse, "Response") + "\n\n"
@@ -57,4 +60,43 @@ function generatePython(p: ParsedCurl, fn: string): string {
   out.push(`    resp.raise_for_status()`);
   out.push(`    return resp.json()`);
   return out.join("\n") + "\n";
+}
+
+// Go function names are conventionally exported (capitalized).
+const goName = (fn: string) => fn.charAt(0).toUpperCase() + fn.slice(1);
+// JSON and Go share string-escaping rules closely enough for literals here.
+const goStr = (s: string) => JSON.stringify(s);
+
+function generateGo(p: ParsedCurl, fn: string): string {
+  const hasQuery = Object.keys(p.query).length > 0;
+  const hasHeaders = Object.keys(p.headers).length > 0;
+  const hasBody = p.body !== undefined;
+
+  const imports = ["io", "net/http"];
+  if (hasQuery) imports.push("net/url");
+  if (hasBody) imports.push("strings");
+  imports.sort();
+
+  const L: string[] = ["package main", "", "import ("];
+  for (const im of imports) L.push(`\t${goStr(im)}`);
+  L.push(")", "", `func ${goName(fn)}() ([]byte, error) {`);
+
+  let urlExpr = goStr(p.url);
+  if (hasQuery) {
+    L.push(`\tu, err := url.Parse(${goStr(p.url)})`, `\tif err != nil {`, `\t\treturn nil, err`, `\t}`);
+    L.push(`\tq := u.Query()`);
+    for (const [k, v] of Object.entries(p.query)) L.push(`\tq.Set(${goStr(k)}, ${goStr(v)})`);
+    L.push(`\tu.RawQuery = q.Encode()`);
+    urlExpr = "u.String()";
+  }
+
+  const bodyArg = hasBody ? `strings.NewReader(${goStr(p.body!)})` : "nil";
+  L.push(`\treq, err := http.NewRequest(${goStr(p.method)}, ${urlExpr}, ${bodyArg})`,
+    `\tif err != nil {`, `\t\treturn nil, err`, `\t}`);
+  if (hasHeaders) {
+    for (const [k, v] of Object.entries(p.headers)) L.push(`\treq.Header.Set(${goStr(k)}, ${goStr(v)})`);
+  }
+  L.push(`\tresp, err := http.DefaultClient.Do(req)`, `\tif err != nil {`, `\t\treturn nil, err`, `\t}`,
+    `\tdefer resp.Body.Close()`, `\treturn io.ReadAll(resp.Body)`, "}");
+  return L.join("\n") + "\n";
 }
