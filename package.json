@@ -1,7 +1,7 @@
 {
   "name": "curl-to-client",
-  "version": "0.2.0",
-  "description": "Turn a cURL command into a typed TypeScript fetch client, a Python requests client, or Go net/http — with response types inferred from a sample.",
+  "version": "0.3.0",
+  "description": "Turn a cURL command into a typed TypeScript fetch client, a Python requests client, Go net/http, or Rust reqwest — with response types inferred from a sample.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 import { generateClient, Target } from "./generate.js";
 
-const TARGETS: Target[] = ["fetch", "python", "go"];
+const TARGETS: Target[] = ["fetch", "python", "go", "rust"];
 
 const HELP = `curl-to-client — turn a cURL command into client code
 
 Usage:
-  curl-to-client '<curl command>' [--target fetch|python|go] [--name fn] [--sample '<json>']
+  curl-to-client '<curl command>' [--target fetch|python|go|rust] [--name fn] [--sample '<json>']
   <curl command> | curl-to-client --target go
 
 Options:
-  --target NAME    output language: fetch (default), python, go
+  --target NAME    output language: fetch (default), python, go, rust
   --name NAME      name of the generated function (default: request)
   --sample JSON    a sample JSON response; infers a typed return (fetch target)
   -h, --help       show this help

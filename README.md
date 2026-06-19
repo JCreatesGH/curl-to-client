@@ -4,7 +4,7 @@
 [![TypeScript](https://img.shields.io/badge/types-included-blue)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-Paste a `cURL` command, get a **typed TypeScript fetch client**, a **Python `requests`** function, or a **Go `net/http`** function — with the response type inferred from a sample JSON body. Turns the snippet from someone's API docs into real, typed code in one step.
+Paste a `cURL` command, get a **typed TypeScript fetch client**, a **Python `requests`** function, a **Go `net/http`** function, or a **Rust `reqwest`** function — with the response type inferred from a sample JSON body. Turns the snippet from someone's API docs into real, typed code in one step.
 
 ![screenshot](assets/screenshot.png)
 
@@ -53,7 +53,7 @@ export async function createUser(): Promise<Response> {
 }
 ```
 
-## Python and Go targets
+## Python, Go, and Rust targets
 
 ```ts
 generateClient(curlCommand, { target: "python", functionName: "create_user" });
@@ -99,17 +99,37 @@ func CreateUser() ([]byte, error) {
 
 The Go target only imports what it uses — `net/url` is added when there's a query string, `strings` when there's a body.
 
+The Rust target emits a `reqwest::blocking` function (with the `Cargo.toml` line you need),
+snake_cases the function name, builds the request fluently (`.query`/`.header`/`.body`), and
+uses `Method::from_bytes` for verbs beyond the built-in `get`/`post`/`put`/`delete`/`patch`/`head`:
+
+```rust
+// Cargo.toml: reqwest = { version = "0.12", features = ["blocking", "json"] }
+use std::error::Error;
+
+pub fn create_user() -> Result<String, Box<dyn Error>> {
+    let client = reqwest::blocking::Client::new();
+    let resp = client.post("https://api.x.com/users")
+        .query(&[("team", "eng")])
+        .header("Authorization", "Bearer t")
+        .body("{\"name\":\"Ada\"}")
+        .send()?
+        .error_for_status()?;
+    Ok(resp.text()?)
+}
+```
+
 ## What it understands
 
 - **cURL parsing** — `-X/--request`, `-H/--header`, `-d/--data(-raw|-binary)`, `--data-urlencode`, `--json`, `-u` (basic auth → header), `-A`, query strings, quoted args, and `\`-line continuations. **Attached short flags** (`-XPOST`, `-d'{…}'`) are split, and **repeated `-d` flags are joined with `&`** the way curl does. Method defaults to GET (or POST when a body is present).
 - **Type inference** — nested objects become named `interface`s (deduped by shape), arrays infer their item type, non-identifier keys are quoted, root arrays become a `type` alias.
-- **Three targets** — a typed `fetch` client (default), a Python `requests` function, or a Go `net/http` function.
+- **Four targets** — a typed `fetch` client (default), a Python `requests` function, a Go `net/http` function, or a Rust `reqwest` function.
 - **Composable** — `parseCurl`, `inferTypes`, and `tokenize` are exported individually.
 
 ## Development
 
 ```bash
-npm install && npm test    # 26 tests
+npm install && npm test    # 28 tests
 npm run build              # tsc, clean
 ```
 

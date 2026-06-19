@@ -1,7 +1,7 @@
 import { parseCurl, ParsedCurl } from "./parse-curl.js";
 import { inferTypes } from "./infer-types.js";
 
-export type Target = "fetch" | "python" | "go";
+export type Target = "fetch" | "python" | "go" | "rust";
 
 export interface GenerateOptions {
   functionName?: string;
@@ -14,6 +14,7 @@ export function generateClient(curlCommand: string, opts: GenerateOptions = {}):
   const fn = opts.functionName ?? "request";
   if (opts.target === "python") return generatePython(p, fn);
   if (opts.target === "go") return generateGo(p, fn);
+  if (opts.target === "rust") return generateRust(p, fn);
   const returnType = opts.sampleResponse !== undefined ? "Response" : "unknown";
   const typeDefs = opts.sampleResponse !== undefined
     ? inferTypes(opts.sampleResponse, "Response") + "\n\n"
@@ -98,5 +99,44 @@ function generateGo(p: ParsedCurl, fn: string): string {
   }
   L.push(`\tresp, err := http.DefaultClient.Do(req)`, `\tif err != nil {`, `\t\treturn nil, err`, `\t}`,
     `\tdefer resp.Body.Close()`, `\treturn io.ReadAll(resp.Body)`, "}");
+  return L.join("\n") + "\n";
+}
+
+// Rust fn names are snake_case by convention.
+const rustName = (fn: string) =>
+  fn.replace(/([a-z0-9])([A-Z])/g, "$1_$2").replace(/[^A-Za-z0-9]+/g, "_").toLowerCase();
+const rustStr = (s: string) => JSON.stringify(s);   // ASCII content: JSON literals are valid Rust
+const RUST_METHODS = new Set(["get", "post", "put", "delete", "patch", "head"]);
+
+function generateRust(p: ParsedCurl, fn: string): string {
+  const m = p.method.toLowerCase();
+  const builder = RUST_METHODS.has(m)
+    ? `client.${m}(${rustStr(p.url)})`
+    : `client.request(reqwest::Method::from_bytes(${rustStr(p.method)}.as_bytes()).unwrap(), ${rustStr(p.url)})`;
+
+  const L: string[] = [
+    `// Cargo.toml: reqwest = { version = "0.12", features = ["blocking", "json"] }`,
+    `use std::error::Error;`,
+    "",
+    `pub fn ${rustName(fn)}() -> Result<String, Box<dyn Error>> {`,
+    `    let client = reqwest::blocking::Client::new();`,
+    `    let resp = ${builder}`,
+  ];
+  if (Object.keys(p.query).length) {
+    const pairs = Object.entries(p.query).map(([k, v]) => `(${rustStr(k)}, ${rustStr(v)})`).join(", ");
+    L.push(`        .query(&[${pairs}])`);
+  }
+  for (const [k, v] of Object.entries(p.headers)) {
+    L.push(`        .header(${rustStr(k)}, ${rustStr(v)})`);
+  }
+  if (p.body !== undefined) {
+    L.push(`        .body(${rustStr(p.body)})`);
+  }
+  L.push(
+    `        .send()?`,
+    `        .error_for_status()?;`,
+    `    Ok(resp.text()?)`,
+    `}`,
+  );
   return L.join("\n") + "\n";
 }

@@ -60,4 +60,30 @@ describe("generateClient", () => {
     expect(code).not.toContain('"strings"');
     expect(code).toContain('http.NewRequest("GET", "https://x.com/health", nil)');
   });
+
+  it("generates a Rust reqwest client", () => {
+    const code = generateClient(
+      `curl -X POST 'https://api.x.com/users?team=eng' -H 'Authorization: Bearer t' -d '{"name":"Ada"}'`,
+      { functionName: "createUser", target: "rust" }
+    );
+    expect(code).toContain('features = ["blocking", "json"]');
+    expect(code).toContain("pub fn create_user() -> Result<String, Box<dyn Error>> {");  // snake_case
+    expect(code).toContain('let client = reqwest::blocking::Client::new();');
+    expect(code).toContain('let resp = client.post("https://api.x.com/users")');
+    expect(code).toContain('.query(&[("team", "eng")])');
+    expect(code).toContain('.header("Authorization", "Bearer t")');
+    expect(code).toContain('.body("{\\"name\\":\\"Ada\\"}")');
+    expect(code).toContain(".send()?");
+    expect(code).toContain(".error_for_status()?;");
+    expect(code).toContain("Ok(resp.text()?)");
+  });
+
+  it("uses Method::from_bytes for an uncommon Rust verb, and a bare GET chains straight to send", () => {
+    expect(generateClient("curl -X PURGE https://x.com/cache", { target: "rust" }))
+      .toContain('reqwest::Method::from_bytes("PURGE".as_bytes()).unwrap()');
+    const get = generateClient("curl https://x.com/health", { target: "rust" });
+    expect(get).toContain('client.get("https://x.com/health")');
+    expect(get).not.toContain(".query(");   // no query/headers/body -> straight to send
+    expect(get).not.toContain(".body(");
+  });
 });

@@ -3,6 +3,14 @@
 All notable changes are documented here, following
 [Keep a Changelog](https://keepachangelog.com/) and [SemVer](https://semver.org/).
 
+## [0.3.0]
+
+### Added
+- **Rust (`reqwest`) target** (`--target rust`) — emits a `reqwest::blocking` function with the
+  required `Cargo.toml` line, a snake_cased function name, a fluent
+  `.query`/`.header`/`.body` chain, `.error_for_status()`, and `Method::from_bytes` for verbs
+  beyond the built-in `get`/`post`/`put`/`delete`/`patch`/`head`.
+
 ## [0.2.0]
 
 ### Added
